@@ -6,7 +6,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { StakehouseAPI } from "../../harnesses/SimplifiedStakehouseAPI.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+//import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "../libraries/ReentrancyGuard.sol";
 import { ISyndicateInit } from "../interfaces/ISyndicateInit.sol";
 import { ETHTransferHelper } from "../transfer/ETHTransferHelper.sol";
 import {
@@ -120,6 +121,9 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
     /// @notice Once a BLS public key is no longer part of the syndicate, the accumulated ETH per free floating SLOT share is snapshotted so historical earnings can be drawn down correctly
     mapping(blsKey => uint256) public lastAccumulatedETHPerFreeFloatingShare;
 
+    // Added. If updateAccruedETHPerShares was called
+    bool public updateAccruedETHPerSharesWasCalled;
+
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -177,6 +181,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
         // Ensure there are registered KNOTs. Syndicates are deployed with at least 1 registered but this can fall to zero.
         // Fee recipient should be re-assigned in the event that happens as any further ETH can be collected by owner
         if (numberOfRegisteredKnots > 0) {
+            updateAccruedETHPerSharesWasCalled = true; // Added
             // All time, total ETH that was earned per slot type (free floating or collateralized)
             uint256 totalEthPerSlotType = calculateETHForFreeFloatingOrCollateralizedHolders();
 
@@ -654,6 +659,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
         isNoLongerPartOfSyndicate[_blsPublicKey] = true;
 
         // For the free floating and collateralized SLOT of the knot, snapshot the accumulated ETH per share
+        require(accumulatedETHPerFreeFloatingShare > 0); // Added
         lastAccumulatedETHPerFreeFloatingShare[_blsPublicKey] = accumulatedETHPerFreeFloatingShare;
 
         // We need to reduce `totalFreeFloatingShares` in order to avoid further ETH accruing to shares of de-registered knot
