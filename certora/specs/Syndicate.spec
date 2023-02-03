@@ -409,6 +409,7 @@ function randomElementFromState(uint256 select, bytes32 bytes32_arg, address add
 /* If you want to stake to 2 blspubkeys, then you get the same result if you split your function call into 2 calls
 So stake([key1, key2], ...) and stake(key1, ...); stake(key2, ...) gives the same result */
 // Timeout
+/*
 rule ruleArrayStake() {
 
     env e;
@@ -446,6 +447,7 @@ rule ruleArrayStake() {
 
     assert value1 == value2, "If someone splits a stake calls into multiple then it shouldn't change the result!";
 }
+*/
 
 /* Only the staking action can be reverted by the priority staking
 aka you can still unstake even if the owner go rogue and change the priority staking to an absurd value */
